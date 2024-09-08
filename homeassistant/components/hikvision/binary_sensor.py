@@ -5,35 +5,21 @@ from __future__ import annotations
 from datetime import timedelta
 import logging
 
-from pyhik.hikvision import HikCamera
 import voluptuous as vol
 
 from homeassistant.components.binary_sensor import (
-    PLATFORM_SCHEMA as BINARY_SENSOR_PLATFORM_SCHEMA,
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.const import (
-    ATTR_LAST_TRIP_TIME,
-    CONF_CUSTOMIZE,
-    CONF_DELAY,
-    CONF_HOST,
-    CONF_NAME,
-    CONF_PASSWORD,
-    CONF_PORT,
-    CONF_SSL,
-    CONF_USERNAME,
-    EVENT_HOMEASSISTANT_START,
-    EVENT_HOMEASSISTANT_STOP,
-)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_LAST_TRIP_TIME, CONF_DELAY
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import track_point_in_utc_time
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util.dt import utcnow
 
-from .const import DEFAULT_PORT
+from . import HikvisionData
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -75,42 +61,14 @@ CUSTOMIZE_SCHEMA = vol.Schema(
     }
 )
 
-PLATFORM_SCHEMA = BINARY_SENSOR_PLATFORM_SCHEMA.extend(
-    {
-        vol.Optional(CONF_NAME): cv.string,
-        vol.Required(CONF_HOST): cv.string,
-        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-        vol.Optional(CONF_SSL, default=False): cv.boolean,
-        vol.Required(CONF_USERNAME): cv.string,
-        vol.Required(CONF_PASSWORD): cv.string,
-        vol.Optional(CONF_CUSTOMIZE, default={}): vol.Schema(
-            {cv.string: CUSTOMIZE_SCHEMA}
-        ),
-    }
-)
 
-
-def setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the Hikvision binary sensor devices."""
-    name = config.get(CONF_NAME)
-    host = config[CONF_HOST]
-    port = config[CONF_PORT]
-    username = config[CONF_USERNAME]
-    password = config[CONF_PASSWORD]
-
-    customize = config[CONF_CUSTOMIZE]
-
-    protocol = "https" if config[CONF_SSL] else "http"
-
-    url = f"{protocol}://{host}"
-
-    data = HikvisionData(hass, url, port, name, username, password)
-
+    data: HikvisionData = config_entry.runtime_data
     if data.sensors is None:
         _LOGGER.error("Hikvision event stream has no data, unable to set up")
         return
@@ -125,9 +83,11 @@ def setup_platform(
             else:
                 sensor_name = sensor.replace(" ", "_")
 
-            custom = customize.get(sensor_name.lower(), {})
-            ignore = custom.get(CONF_IGNORED)
-            delay = custom.get(CONF_DELAY)
+            # custom = customize.get(sensor_name.lower(), {})
+            # ignore = custom.get(CONF_IGNORED)
+            # delay = custom.get(CONF_DELAY)
+            ignore = None
+            delay = None
 
             _LOGGER.debug(
                 "Entity: %s - %s, Options - Ignore: %s, Delay: %s",
@@ -141,60 +101,7 @@ def setup_platform(
                     HikvisionBinarySensor(hass, sensor, channel[1], data, delay)
                 )
 
-    add_entities(entities)
-
-
-class HikvisionData:
-    """Hikvision device event stream object."""
-
-    def __init__(self, hass, url, port, name, username, password):
-        """Initialize the data object."""
-        self._url = url
-        self._port = port
-        self._name = name
-        self._username = username
-        self._password = password
-
-        # Establish camera
-        self.camdata = HikCamera(self._url, self._port, self._username, self._password)
-
-        if self._name is None:
-            self._name = self.camdata.get_name
-
-        hass.bus.listen_once(EVENT_HOMEASSISTANT_STOP, self.stop_hik)
-        hass.bus.listen_once(EVENT_HOMEASSISTANT_START, self.start_hik)
-
-    def stop_hik(self, event):
-        """Shutdown Hikvision subscriptions and subscription thread on exit."""
-        self.camdata.disconnect()
-
-    def start_hik(self, event):
-        """Start Hikvision event stream thread."""
-        self.camdata.start_stream()
-
-    @property
-    def sensors(self):
-        """Return list of available sensors and their states."""
-        return self.camdata.current_event_states
-
-    @property
-    def cam_id(self):
-        """Return device id."""
-        return self.camdata.get_id
-
-    @property
-    def name(self):
-        """Return device name."""
-        return self._name
-
-    @property
-    def type(self):
-        """Return device type."""
-        return self.camdata.get_type
-
-    def get_attributes(self, sensor, channel):
-        """Return attribute list for sensor/channel."""
-        return self.camdata.fetch_attributes(sensor, channel)
+    async_add_entities(entities)
 
 
 class HikvisionBinarySensor(BinarySensorEntity):

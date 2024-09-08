@@ -2,7 +2,6 @@
 
 from typing import Any
 
-from pyhik.hikvision import HikCamera
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -16,6 +15,7 @@ from homeassistant.const import (
 )
 import homeassistant.helpers.config_validation as cv
 
+from . import HikvisionData
 from .const import DEFAULT_PORT, DOMAIN
 
 CONFIG_SCHEMA = vol.Schema(
@@ -73,6 +73,5 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         Returns the name of the Camera/NVR, or None if a connection could not be established.
         """
-        url = f"{'https' if is_https else 'http'}://{host}"
-        connection = HikCamera(url, port, username, password)
+        connection = HikvisionData(host, port, is_https, None, username, password)
         return connection.name
