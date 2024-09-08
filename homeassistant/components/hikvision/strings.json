@@ -12,6 +12,9 @@
           "password": "[%key:common::config_flow::data::password%]"
         }
       }
+    },
+    "error": {
+      "connection_failed": "Could not connect to Camera/NVR."
     }
   }
 }

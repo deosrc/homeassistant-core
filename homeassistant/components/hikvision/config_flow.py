@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from pyhik.hikvision import HikCamera
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -39,7 +40,39 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
         """Handle the initial step."""
-        if user_input is not None:
-            return self.async_abort(reason="not implemented")
+        errors = {}
 
-        return self.async_show_form(step_id="user", data_schema=CONFIG_SCHEMA)
+        if user_input is not None:
+            host = user_input[CONF_HOST]
+            port = user_input[CONF_PORT]
+
+            result = await self.hass.async_add_executor_job(
+                self.check_connection,
+                host,
+                port,
+                user_input[CONF_SSL],
+                user_input[CONF_USERNAME],
+                user_input[CONF_PASSWORD],
+            )
+
+            if result:
+                await self.async_set_unique_id(f"{host}:{port}")
+                title = user_input.get(CONF_NAME) or result
+                return self.async_create_entry(title=title, data=user_input)
+
+            errors["base"] = "connection_failed"
+
+        return self.async_show_form(
+            step_id="user", data_schema=CONFIG_SCHEMA, errors=errors
+        )
+
+    def check_connection(
+        self, host: str, port: int, is_https: bool, username: str, password: str
+    ) -> str | None:
+        """Check the connection to a Hikvision camera or NVR.
+
+        Returns the name of the Camera/NVR, or None if a connection could not be established.
+        """
+        url = f"{'https' if is_https else 'http'}://{host}"
+        connection = HikCamera(url, port, username, password)
+        return connection.name
