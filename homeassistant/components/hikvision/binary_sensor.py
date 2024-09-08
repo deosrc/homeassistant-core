@@ -33,11 +33,12 @@ from homeassistant.helpers.event import track_point_in_utc_time
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util.dt import utcnow
 
+from .const import DEFAULT_PORT
+
 _LOGGER = logging.getLogger(__name__)
 
 CONF_IGNORED = "ignored"
 
-DEFAULT_PORT = 80
 DEFAULT_IGNORED = False
 DEFAULT_DELAY = 0
 
