@@ -126,6 +126,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+    await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
     connection: HikvisionData = entry.runtime_data
     connection.stop_hik()
     entry.runtime_data = None
