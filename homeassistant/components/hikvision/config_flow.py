@@ -47,7 +47,7 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             port = user_input[CONF_PORT]
 
             result = await self.hass.async_add_executor_job(
-                self.check_connection,
+                self.create_connection,
                 host,
                 port,
                 user_input[CONF_SSL],
@@ -55,9 +55,9 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 user_input[CONF_PASSWORD],
             )
 
-            if result:
+            if result.cam_id:
                 await self.async_set_unique_id(f"{host}:{port}")
-                title = user_input.get(CONF_NAME) or result
+                title = user_input.get(CONF_NAME) or result.name or host
                 return self.async_create_entry(title=title, data=user_input)
 
             errors["base"] = "connection_failed"
@@ -66,12 +66,11 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=CONFIG_SCHEMA, errors=errors
         )
 
-    def check_connection(
+    def create_connection(
         self, host: str, port: int, is_https: bool, username: str, password: str
-    ) -> str | None:
+    ) -> HikvisionData:
         """Check the connection to a Hikvision camera or NVR.
 
         Returns the name of the Camera/NVR, or None if a connection could not be established.
         """
-        connection = HikvisionData(host, port, is_https, None, username, password)
-        return connection.name
+        return HikvisionData(host, port, is_https, None, username, password)
