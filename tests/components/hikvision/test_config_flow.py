@@ -57,7 +57,7 @@ async def test_create_entry(hass: HomeAssistant, camera: MagicMock) -> None:
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"] == FAKE_CONFIG
-    assert result["result"].unique_id == "fake_host:1234"
+    assert result["result"].unique_id == "1234"
 
 
 async def test_title_from_config(hass: HomeAssistant, camera: MagicMock) -> None:
