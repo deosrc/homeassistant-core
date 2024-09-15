@@ -6,25 +6,11 @@ import pytest
 
 from homeassistant.components.hikvision.const import DOMAIN
 from homeassistant.config_entries import SOURCE_USER
-from homeassistant.const import (
-    CONF_HOST,
-    CONF_NAME,
-    CONF_PASSWORD,
-    CONF_PORT,
-    CONF_SSL,
-    CONF_USERNAME,
-)
+from homeassistant.const import CONF_NAME, CONF_SSL
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-FAKE_CONFIG = {
-    CONF_NAME: "fake_name",
-    CONF_HOST: "fake_host",
-    CONF_PORT: 1234,
-    CONF_SSL: False,
-    CONF_USERNAME: "fake_user",
-    CONF_PASSWORD: "fake_password",
-}
+from .const import FAKE_CONFIG
 
 
 async def test_show_config_form(hass: HomeAssistant) -> None:

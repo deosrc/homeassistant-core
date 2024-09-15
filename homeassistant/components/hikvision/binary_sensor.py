@@ -109,7 +109,14 @@ class HikvisionBinarySensor(BinarySensorEntity):
 
     _attr_should_poll = False
 
-    def __init__(self, hass, sensor, channel, cam, delay):
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        sensor: str,
+        channel: int,
+        cam: HikvisionData,
+        delay: int | None,
+    ) -> None:
         """Initialize the binary_sensor."""
         self._hass = hass
         self._cam = cam
