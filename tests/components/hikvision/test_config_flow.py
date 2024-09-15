@@ -2,6 +2,8 @@
 
 from unittest.mock import MagicMock
 
+import pytest
+
 from homeassistant.components.hikvision.const import DOMAIN
 from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import (
@@ -101,25 +103,16 @@ async def test_title_from_hostname(hass: HomeAssistant, camera: MagicMock) -> No
     assert result["title"] == "fake_host"
 
 
-async def test_ssl_false_url(hass: HomeAssistant, camera: MagicMock) -> None:
-    """Test the URL used when SSL is disabled."""
+@pytest.mark.parametrize(
+    ("ssl", "url"), [(True, "https://fake_host"), (False, "http://fake_host")]
+)
+async def test_url(hass: HomeAssistant, camera: MagicMock, ssl: bool, url: str) -> None:
+    """Test the URL used for SSL settings."""
     config = FAKE_CONFIG.copy()
-    config[CONF_SSL] = False
+    config[CONF_SSL] = ssl
 
     await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}, data=config
     )
 
-    camera.assert_called_with("http://fake_host", 1234, "fake_user", "fake_password")
-
-
-async def test_ssl_true_url(hass: HomeAssistant, camera: MagicMock) -> None:
-    """Test the URL used when SSL is disabled."""
-    config = FAKE_CONFIG.copy()
-    config[CONF_SSL] = True
-
-    await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": SOURCE_USER}, data=config
-    )
-
-    camera.assert_called_with("https://fake_host", 1234, "fake_user", "fake_password")
+    camera.assert_called_with(url, 1234, "fake_user", "fake_password")
