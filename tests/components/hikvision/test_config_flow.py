@@ -98,3 +98,27 @@ async def test_title_from_hostname(hass: HomeAssistant, camera: MagicMock) -> No
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "fake_host"
+
+
+async def test_ssl_false_url(hass: HomeAssistant, camera: MagicMock) -> None:
+    """Test the URL used when SSL is disabled."""
+    config = FAKE_CONFIG.copy()
+    config[CONF_SSL] = False
+
+    await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}, data=config
+    )
+
+    camera.assert_called_with("http://fake_host", 1234, "fake_user", "fake_password")
+
+
+async def test_ssl_true_url(hass: HomeAssistant, camera: MagicMock) -> None:
+    """Test the URL used when SSL is disabled."""
+    config = FAKE_CONFIG.copy()
+    config[CONF_SSL] = True
+
+    await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}, data=config
+    )
+
+    camera.assert_called_with("https://fake_host", 1234, "fake_user", "fake_password")
