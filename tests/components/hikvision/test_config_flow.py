@@ -48,6 +48,25 @@ async def test_create_entry(hass: HomeAssistant, camera: MagicMock) -> None:
     assert result["result"].unique_id == "1234"
 
 
+async def test_duplicate_entry(hass: HomeAssistant, camera: MagicMock) -> None:
+    """Test the entry is created when connection is successful."""
+    camera.return_value.get_id = 1234
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}, data=FAKE_CONFIG
+    )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"] == FAKE_CONFIG
+    assert result["result"].unique_id == "1234"
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}, data=FAKE_CONFIG
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
+
+
 async def test_title_from_config(hass: HomeAssistant, camera: MagicMock) -> None:
     """Test the entry title from the config is used."""
     camera.return_value.get_id = 1234
