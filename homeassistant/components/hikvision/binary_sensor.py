@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import timedelta
 import logging
+from typing import Any
 
 import voluptuous as vol
 
@@ -30,7 +32,7 @@ DEFAULT_DELAY = 0
 
 ATTR_DELAY = "delay"
 
-DEVICE_CLASS_MAP = {
+DEVICE_CLASS_MAP: Mapping[str, BinarySensorDeviceClass | None] = {
     "Motion": BinarySensorDeviceClass.MOTION,
     "Line Crossing": BinarySensorDeviceClass.MOTION,
     "Field Detection": BinarySensorDeviceClass.MOTION,
@@ -149,22 +151,22 @@ class HikvisionBinarySensor(BinarySensorEntity):
         return self._cam.get_attributes(self._sensor, self._channel)[3]
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of the Hikvision sensor."""
         return self._name
 
     @property
-    def unique_id(self):
+    def unique_id(self) -> str | None:
         """Return a unique ID."""
         return self._id
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return true if sensor is on."""
         return self._sensor_state()
 
     @property
-    def device_class(self):
+    def device_class(self) -> BinarySensorDeviceClass | None:
         """Return the class of this sensor, from DEVICE_CLASSES."""
         try:
             return DEVICE_CLASS_MAP[self._sensor]
@@ -173,7 +175,7 @@ class HikvisionBinarySensor(BinarySensorEntity):
             return None
 
     @property
-    def extra_state_attributes(self):
+    def extra_state_attributes(self) -> Mapping[str, Any] | None:
         """Return the state attributes."""
         attr = {ATTR_LAST_TRIP_TIME: self._sensor_last_update()}
 
