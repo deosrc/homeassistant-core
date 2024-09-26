@@ -36,6 +36,12 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    async def async_step_import(
+        self, legacy_config: dict
+    ) -> config_entries.ConfigFlowResult:
+        """Import the legacy yaml config."""
+        return await self.async_step_user(legacy_config)
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
@@ -44,13 +50,13 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             host = user_input[CONF_HOST]
-            port = user_input[CONF_PORT]
+            port = user_input.get(CONF_PORT)
 
             result = await self.hass.async_add_executor_job(
                 self.create_connection,
                 host,
                 port,
-                user_input[CONF_SSL],
+                user_input.get(CONF_SSL, False),
                 user_input[CONF_USERNAME],
                 user_input[CONF_PASSWORD],
             )
@@ -68,7 +74,7 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     def create_connection(
-        self, host: str, port: int, is_https: bool, username: str, password: str
+        self, host: str, port: int | None, is_https: bool, username: str, password: str
     ) -> HikvisionData:
         """Check the connection to a Hikvision camera or NVR.
 

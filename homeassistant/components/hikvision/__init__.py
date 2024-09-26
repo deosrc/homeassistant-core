@@ -24,7 +24,7 @@ class HikvisionData:
     def __init__(
         self,
         host: str,
-        port: int,
+        port: int | None,
         is_https: bool,
         name: str | None,
         username: str,
@@ -32,8 +32,8 @@ class HikvisionData:
     ) -> None:
         """Initialize the data object."""
         self._host = host
-        self._port = port
         self._is_https = is_https
+        self._port = port or (443 if is_https else 80)
         self._name = name
         self._username = username
         self._password = password
@@ -81,15 +81,15 @@ class HikvisionData:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Home Connect component."""
     host: str = entry.data[CONF_HOST]
-    port: int = entry.data[CONF_PORT]
-    is_https: bool = entry.data[CONF_SSL]
+    port: int | None = entry.data.get(CONF_PORT)
+    is_https: bool = entry.data.get(CONF_SSL, False)
     name: str | None = entry.data.get(CONF_NAME)
     username: str = entry.data[CONF_USERNAME]
     password: str = entry.data[CONF_PASSWORD]
 
     def create_connection(
         host: str,
-        port: int,
+        port: int | None,
         is_https: bool,
         name: str | None,
         username: str,
