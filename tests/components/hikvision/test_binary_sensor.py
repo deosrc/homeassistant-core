@@ -72,3 +72,34 @@ async def test_callback_registered(
 
     _, args, _ = camera.return_value.add_update_callback.mock_calls[0]
     assert args[1] == entity_registry_entry.unique_id
+
+
+@pytest.mark.parametrize(
+    ("raw_value", "expected_state"), [(True, "on"), (False, "off")]
+)
+async def test_sensor_value(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    camera: MagicMock,
+    raw_value: bool,
+    expected_state: str,
+) -> None:
+    """Test sensor value."""
+    camera.return_value.get_id = 1234
+    camera.return_value.get_type = "NVR"
+    camera.return_value.fetch_attributes.return_value = [
+        raw_value,  # Sensor State
+        1,  # Channel Number (for NVRs)
+        0,
+        datetime(2024, 9, 15, 17, 28, 24, 938074),  # Last update time
+    ]
+    camera.return_value.current_event_states = {
+        "test sensor": [camera.return_value.fetch_attributes.return_value]
+    }
+
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("binary_sensor.fake_name_test_sensor_1").state
+    assert state == expected_state
