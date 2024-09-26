@@ -25,6 +25,14 @@
     "deprecated_yaml_import_issue_cannot_connect": {
       "title": "The {integration_title} YAML configuration import failed",
       "description": "Configuring {integration_title} using YAML is being removed but there was a connection error importing your YAML configuration.\n\nEnsure connection to {integration_title} works and restart Home Assistant to try again or remove the {integration_title} YAML configuration from your configuration.yaml file and continue to [set up the integration]({url}) manually."
+    },
+    "customize_config_ignored_present": {
+      "title": "{integration_title} sensors need to be manually disabled",
+      "description": "Ignoring {integration_title} sensors via the YAML `customize` property is no longer supported.\n\nIf you still wish to ignore these sensors, you can disable the entities using the Home Assistant entity settings.\n\nThis warning will be removed once the YAML configuration is removed, and Home Assistant is restarted."
+    },
+    "customize_config_delay_present": {
+      "title": "{integration_title} delay configuration is no longer supported",
+      "description": "Configuring a delay for {integration_title} sensors is no longer supported. The delay settings will be ignored.\n\nThis warning will be removed once the YAML configuration is removed, and Home Assistant is restarted."
     }
   }
 }

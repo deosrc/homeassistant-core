@@ -6,6 +6,7 @@ import voluptuous as vol
 
 from homeassistant import config_entries, data_entry_flow
 from homeassistant.const import (
+    CONF_DELAY,
     CONF_HOST,
     CONF_NAME,
     CONF_PASSWORD,
@@ -18,7 +19,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
 
 from . import HikvisionData
-from .const import DEFAULT_PORT, DOMAIN
+from .const import CONF_CUSTOMIZE, CONF_IGNORED, DEFAULT_PORT, DOMAIN
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -42,6 +43,43 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, legacy_config: dict
     ) -> config_entries.ConfigFlowResult:
         """Import the legacy yaml config."""
+        if legacy_config.get(CONF_CUSTOMIZE):
+            for sensor_config in legacy_config[CONF_CUSTOMIZE].values():
+                if sensor_config.get(CONF_IGNORED):
+                    async_create_issue(
+                        self.hass,
+                        DOMAIN,
+                        "customize_config_ignored_present",
+                        is_fixable=False,
+                        is_persistent=False,
+                        issue_domain=DOMAIN,
+                        severity=IssueSeverity.WARNING,
+                        translation_key="customize_config_ignored_present",
+                        translation_placeholders={
+                            "integration_title": "Hikvision",
+                        },
+                    )
+                    break
+            for sensor_config in legacy_config[CONF_CUSTOMIZE].values():
+                if sensor_config.get(CONF_DELAY):
+                    async_create_issue(
+                        self.hass,
+                        DOMAIN,
+                        "customize_config_delay_present",
+                        is_fixable=False,
+                        is_persistent=False,
+                        issue_domain=DOMAIN,
+                        severity=IssueSeverity.WARNING,
+                        translation_key="customize_config_delay_present",
+                        translation_placeholders={
+                            "integration_title": "Hikvision",
+                        },
+                    )
+                    break
+
+        del legacy_config[CONF_CUSTOMIZE]
+        del legacy_config["platform"]
+
         try:
             conn = await self.hass.async_add_executor_job(
                 self._create_connection, legacy_config
