@@ -44,3 +44,31 @@ async def test_sensor_setup(
     assert hass.states.get(sensor_entity_id) is not None
     assert entity_registry_entry.original_name == sensor_name
     assert entity_registry_entry.unique_id == "1234.test sensor.1"
+
+
+async def test_callback_registered(
+    hass: HomeAssistant, config_entry: MockConfigEntry, camera: MagicMock
+) -> None:
+    """Test callback is registered when sensor is created."""
+    camera.return_value.get_id = 1234
+    camera.return_value.get_type = "NVR"
+    camera.return_value.current_event_states = {
+        "test sensor": [
+            [
+                False,  # Sensor State
+                1,  # Channel Number (for NVRs)
+                0,
+                datetime(2024, 9, 15, 17, 28, 24, 938074),  # Last update time
+            ]
+        ]
+    }
+
+    config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    sensor_entity_id = "binary_sensor.fake_name_test_sensor_1"
+    entity_registry_entry = hass.data["entity_registry"].entities.data[sensor_entity_id]
+
+    _, args, _ = camera.return_value.add_update_callback.mock_calls[0]
+    assert args[1] == entity_registry_entry.unique_id
