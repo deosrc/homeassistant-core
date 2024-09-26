@@ -15,6 +15,9 @@
     },
     "error": {
       "connection_failed": "Could not connect to Camera/NVR."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
   }
 }

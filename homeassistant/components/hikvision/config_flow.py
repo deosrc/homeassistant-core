@@ -57,6 +57,7 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             if result.cam_id:
                 await self.async_set_unique_id(str(result.cam_id))
+                self._abort_if_unique_id_configured()
                 title = user_input.get(CONF_NAME) or result.name or host
                 return self.async_create_entry(title=title, data=user_input)
 
