@@ -21,6 +21,37 @@
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Sensor End Delays",
+        "description": "Specify the delay to wait after a sensor event ends before updating Home Assistant in seconds. This is useful to catch multiple quick trips in one window without the state toggling on and off.\n\nDelays are configured by sensor type. All values are in seconds.",
+        "data": {
+          "delay.motion": "Motion",
+          "delay.line_crossing": "Line Crossing",
+          "delay.field_detection": "Field Detection",
+          "delay.tamper_detection": "Tamper Detection",
+          "delay.shelter_alarm": "Shelter Alarm",
+          "delay.disk_full": "Disk Full",
+          "delay.disk_error": "Disk Error",
+          "delay.net_interface_broken": "Net Interface Broken",
+          "delay.ip_conflict": "IP Conflict",
+          "delay.illegal_access": "Illegal Access",
+          "delay.video_mismatch": "Video Mismatch",
+          "delay.bad_video": "Bad Video",
+          "delay.pir_alarm": "PIR Alarm",
+          "delay.face_detection": "Face Detection",
+          "delay.scene_change_detection": "Scene Change Detection",
+          "delay.io": "I/O",
+          "delay.unattended_baggage": "Unattended Baggage",
+          "delay.attended_baggage": "Attended Baggage",
+          "delay.recording_failure": "Recording Failure",
+          "delay.exiting_region": "Exiting Region",
+          "delay.entering_region": "Entering Region"
+        }
+      }
+    }
+  },
   "issues": {
     "deprecated_yaml_import_issue_cannot_connect": {
       "title": "The {integration_title} YAML configuration import failed",

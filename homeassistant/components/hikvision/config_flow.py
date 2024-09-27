@@ -14,7 +14,7 @@ from homeassistant.const import (
     CONF_SSL,
     CONF_USERNAME,
 )
-from homeassistant.core import DOMAIN as HOMEASSISTANT_DOMAIN
+from homeassistant.core import DOMAIN as HOMEASSISTANT_DOMAIN, callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
 
@@ -29,6 +29,32 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Optional(CONF_SSL, default=False): cv.boolean,
         vol.Required(CONF_USERNAME): cv.string,
         vol.Required(CONF_PASSWORD): cv.string,
+    }
+)
+
+OPTIONS_SCHEMA = vol.Schema(
+    {
+        vol.Optional("delay.motion"): cv.positive_int,
+        vol.Optional("delay.line_crossing"): cv.positive_int,
+        vol.Optional("delay.field_detection"): cv.positive_int,
+        vol.Optional("delay.tamper_detection"): cv.positive_int,
+        vol.Optional("delay.shelter_alarm"): cv.positive_int,
+        vol.Optional("delay.disk_full"): cv.positive_int,
+        vol.Optional("delay.disk_error"): cv.positive_int,
+        vol.Optional("delay.net_interface_broken"): cv.positive_int,
+        vol.Optional("delay.ip_conflict"): cv.positive_int,
+        vol.Optional("delay.illegal_access"): cv.positive_int,
+        vol.Optional("delay.video_mismatch"): cv.positive_int,
+        vol.Optional("delay.bad_video"): cv.positive_int,
+        vol.Optional("delay.pir_alarm"): cv.positive_int,
+        vol.Optional("delay.face_detection"): cv.positive_int,
+        vol.Optional("delay.scene_change_detection"): cv.positive_int,
+        vol.Optional("delay.io"): cv.positive_int,
+        vol.Optional("delay.unattended_baggage"): cv.positive_int,
+        vol.Optional("delay.attended_baggage"): cv.positive_int,
+        vol.Optional("delay.recording_failure"): cv.positive_int,
+        vol.Optional("delay.exiting_region"): cv.positive_int,
+        vol.Optional("delay.entering_region"): cv.positive_int,
     }
 )
 
@@ -168,3 +194,29 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return conn
 
         raise ConnectionError
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> config_entries.OptionsFlow:
+        """Return the options flow."""
+        return HikvisionOptionsFlowHandler(config_entry)
+
+
+class HikvisionOptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
+    """Handle options flow for the Hikvision integraton."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=self.add_suggested_values_to_schema(
+                OPTIONS_SCHEMA, self.config_entry.options
+            ),
+        )
