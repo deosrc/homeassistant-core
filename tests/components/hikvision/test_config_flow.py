@@ -154,3 +154,23 @@ async def test_yaml_import_with_ignored(hass: HomeAssistant) -> None:
     issue_registry = ir.async_get(hass)
     issue = issue_registry.async_get_issue(DOMAIN, "customize_config_ignored_present")
     assert issue
+
+
+async def test_yaml_import_connection_error(
+    hass: HomeAssistant, camera: MagicMock
+) -> None:
+    """Check an issue is created if connection error on import."""
+    yaml_config: dict = LEGACY_PLATFORM_CONFIG.copy()
+
+    camera.return_value.get_id = None
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_IMPORT}, data=yaml_config
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "deprecated_yaml_import_failed"
+
+    issue_registry = ir.async_get(hass)
+    issue = issue_registry.async_get_issue(DOMAIN, "deprecated_yaml_cannot_connect")
+    assert issue
