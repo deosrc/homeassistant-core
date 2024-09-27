@@ -43,7 +43,7 @@ async def test_connection_failed(hass: HomeAssistant, camera: MagicMock) -> None
 
 async def test_create_entry(hass: HomeAssistant, camera: MagicMock) -> None:
     """Test the entry is created when connection is successful."""
-    camera.return_value.get_id = 1234
+    camera.return_value.get_id = "1234"
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}, data=FAKE_CONFIG
     )
@@ -55,7 +55,7 @@ async def test_create_entry(hass: HomeAssistant, camera: MagicMock) -> None:
 
 async def test_duplicate_entry(hass: HomeAssistant, camera: MagicMock) -> None:
     """Test the entry is created when connection is successful."""
-    camera.return_value.get_id = 1234
+    camera.return_value.get_id = "1234"
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}, data=FAKE_CONFIG
     )
@@ -74,7 +74,7 @@ async def test_duplicate_entry(hass: HomeAssistant, camera: MagicMock) -> None:
 
 async def test_title_from_config(hass: HomeAssistant, camera: MagicMock) -> None:
     """Test the entry title from the config is used."""
-    camera.return_value.get_id = 1234
+    camera.return_value.get_id = "1234"
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}, data=FAKE_CONFIG
     )
@@ -88,7 +88,7 @@ async def test_title_from_camera_name(hass: HomeAssistant, camera: MagicMock) ->
     config = FAKE_CONFIG.copy()
     del config[CONF_NAME]
 
-    camera.return_value.get_id = 1234
+    camera.return_value.get_id = "1234"
     camera.return_value.get_name = "fake_camera"
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}, data=config
@@ -103,7 +103,7 @@ async def test_title_from_hostname(hass: HomeAssistant, camera: MagicMock) -> No
     config = FAKE_CONFIG.copy()
     del config[CONF_NAME]
 
-    camera.return_value.get_id = 1234
+    camera.return_value.get_id = "1234"
     camera.return_value.get_name = None
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}, data=config

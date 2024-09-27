@@ -160,7 +160,7 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, conf: dict, conn: HikvisionData
     ) -> config_entries.ConfigFlowResult:
         """Create the config entry."""
-        await self.async_set_unique_id(str(conn.cam_id))
+        await self.async_set_unique_id(conn.cam_id)
         self._abort_if_unique_id_configured()
         title = conf.get(CONF_NAME) or conn.name or conf[CONF_HOST]
         return self.async_create_entry(title=title, data=conf)

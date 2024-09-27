@@ -59,12 +59,12 @@ class HikvisionData:
         return self.camdata.current_event_states
 
     @property
-    def cam_id(self):
+    def cam_id(self) -> str | None:
         """Return device id."""
         return self.camdata.get_id
 
     @property
-    def name(self):
+    def name(self) -> str | None:
         """Return device name."""
         return self._name
 
