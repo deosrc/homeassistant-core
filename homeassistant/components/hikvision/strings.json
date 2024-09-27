@@ -62,8 +62,8 @@
       "description": "Ignoring {integration_title} sensors via the YAML `customize` property is no longer supported.\n\nIf you still wish to ignore these sensors, you can disable the entities using the Home Assistant entity settings.\n\nThis warning will be removed once the YAML configuration is removed, and Home Assistant is restarted."
     },
     "customize_config_delay_present": {
-      "title": "{integration_title} delay configuration is no longer supported",
-      "description": "Configuring a delay for {integration_title} sensors is no longer supported. The delay settings will be ignored.\n\nThis warning will be removed once the YAML configuration is removed, and Home Assistant is restarted."
+      "title": "{integration_title} delay functionality has changed",
+      "description": "Configuring a delay for individual {integration_title} sensors is no longer supported. The delay settings currently configured in YAML will be ignored.\n\nDelays can be configured based on sensor type (e.g. Motion) from the options for the integration. These can be accessed by clicking 'Configure' on the [Hikvision integration page](/config/integrations/integration/hikvision).\n\nThis warning will be removed once the YAML configuration is removed, and Home Assistant is restarted."
     }
   }
 }

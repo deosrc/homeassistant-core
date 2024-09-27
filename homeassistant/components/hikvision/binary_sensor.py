@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import timedelta
 import logging
 from typing import Any
 
@@ -15,12 +16,16 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_LAST_TRIP_TIME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import track_point_in_utc_time
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.util.dt import utcnow
 
 from . import HikvisionData
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
+ATTR_DELAY = "delay"
 
 DEVICE_CLASS_MAP: Mapping[str, BinarySensorDeviceClass | None] = {
     "Motion": BinarySensorDeviceClass.MOTION,
@@ -44,6 +49,30 @@ DEVICE_CLASS_MAP: Mapping[str, BinarySensorDeviceClass | None] = {
     "Recording Failure": None,
     "Exiting Region": BinarySensorDeviceClass.MOTION,
     "Entering Region": BinarySensorDeviceClass.MOTION,
+}
+
+PYHIKVISION_HA_SENSOR_TYPE_MAP: Mapping[str, str] = {
+    "Motion": "motion",
+    "Line Crossing": "line_crossing",
+    "Field Detection": "field_detection",
+    "Tamper Detection": "tamper_detection",
+    "Shelter Alarm": "shelter_alarm",
+    "Disk Full": "disk_full",
+    "Disk Error": "disk_error",
+    "Net Interface Broken": "net_interface_broken",
+    "IP Conflict": "ip_conflict",
+    "Illegal Access": "illegal_access",
+    "Video Mismatch": "video_mismatch",
+    "Bad Video": "bad_video",
+    "PIR Alarm": "pir_alarm",
+    "Face Detection": "face_detection",
+    "Scene Change Detection": "scene_change_detection",
+    "I/O": "io",
+    "Unattended Baggage": "unattended_baggage",
+    "Attended Baggage": "attended_baggage",
+    "Recording Failure": "recording_failure",
+    "Exiting Region": "exiting_region",
+    "Entering Region": "entering_region",
 }
 
 
@@ -77,6 +106,11 @@ async def async_setup_entry(
     entities = []
 
     for sensor, channel_list in data.sensors.items():
+        # Determine delay
+        sensor_type = PYHIKVISION_HA_SENSOR_TYPE_MAP[sensor]
+        delay_options_key = f"delay.{sensor_type}"
+        delay = config_entry.options.get(delay_options_key, 0)
+
         for channel in channel_list:
             # Build sensor name, then parse customize config.
             if data.type == "NVR":
@@ -84,8 +118,15 @@ async def async_setup_entry(
             else:
                 sensor_name = sensor.replace(" ", "_")
 
-            _LOGGER.debug("Entity: %s - %s", data.name, sensor_name)
-            entities.append(HikvisionBinarySensor(hass, sensor, channel[1], data))
+            _LOGGER.debug(
+                "Entity: %s - %s, Options - Delay: %s",
+                data.name,
+                sensor_name,
+                delay,
+            )
+            entities.append(
+                HikvisionBinarySensor(hass, sensor, channel[1], data, delay)
+            )
 
     async_add_entities(entities)
 
@@ -101,6 +142,7 @@ class HikvisionBinarySensor(BinarySensorEntity):
         sensor: str,
         channel: int,
         cam: HikvisionData,
+        delay: int | None,
     ) -> None:
         """Initialize the binary_sensor."""
         self._hass = hass
@@ -114,6 +156,13 @@ class HikvisionBinarySensor(BinarySensorEntity):
             self._name = f"{self._cam.name} {sensor}"
 
         self._id = f"{self._cam.cam_id}.{sensor}.{channel}"
+
+        if delay is None:
+            self._delay = 0
+        else:
+            self._delay = delay
+
+        self._timer = None
 
         # Register callback function with pyHik
         self._cam.camdata.add_update_callback(self._update_callback, self._id)
@@ -153,9 +202,42 @@ class HikvisionBinarySensor(BinarySensorEntity):
     @property
     def extra_state_attributes(self) -> Mapping[str, Any] | None:
         """Return the state attributes."""
-        return {ATTR_LAST_TRIP_TIME: self._sensor_last_update()}
+        attr = {ATTR_LAST_TRIP_TIME: self._sensor_last_update()}
+
+        if self._delay != 0:
+            attr[ATTR_DELAY] = self._delay
+
+        return attr
 
     def _update_callback(self, msg):
         """Update the sensor's state, if needed."""
         _LOGGER.debug("Callback signal from: %s", msg)
-        self.schedule_update_ha_state()
+
+        if self._delay > 0 and not self.is_on:
+            # Set timer to wait until updating the state
+            def _delay_update(now):
+                """Timer callback for sensor update."""
+                _LOGGER.debug(
+                    "%s Called delayed (%ssec) update", self._name, self._delay
+                )
+                self.schedule_update_ha_state()
+                self._timer = None
+
+            if self._timer is not None:
+                self._timer()
+                self._timer = None
+
+            self._timer = track_point_in_utc_time(
+                self._hass, _delay_update, utcnow() + timedelta(seconds=self._delay)
+            )
+
+        elif self._delay > 0 and self.is_on:
+            # For delayed sensors kill any callbacks on true events and update
+            if self._timer is not None:
+                self._timer()
+                self._timer = None
+
+            self.schedule_update_ha_state()
+
+        else:
+            self.schedule_update_ha_state()
