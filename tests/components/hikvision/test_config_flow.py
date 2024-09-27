@@ -195,3 +195,27 @@ async def test_yaml_import_success(hass: HomeAssistant, camera: MagicMock) -> No
         HOMEASSISTANT_DOMAIN, "deprecated_yaml_hikvision"
     )
     assert issue
+
+
+async def test_yaml_import_already_configured(
+    hass: HomeAssistant, camera: MagicMock
+) -> None:
+    """Check abort when already imported."""
+    yaml_config: dict = LEGACY_PLATFORM_CONFIG.copy()
+
+    camera.return_value.get_id = "1234"
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_IMPORT}, data=yaml_config
+    )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"] == yaml_config
+    assert result["result"].unique_id == "1234"
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_IMPORT}, data=yaml_config
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
