@@ -4,13 +4,18 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from homeassistant.components.hikvision.const import DOMAIN
-from homeassistant.config_entries import SOURCE_USER
-from homeassistant.const import CONF_NAME, CONF_SSL
+from homeassistant.components.hikvision.const import (
+    CONF_CUSTOMIZE,
+    CONF_IGNORED,
+    DOMAIN,
+)
+from homeassistant.config_entries import SOURCE_IMPORT, SOURCE_USER
+from homeassistant.const import CONF_DELAY, CONF_NAME, CONF_SSL
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+import homeassistant.helpers.issue_registry as ir
 
-from .const import FAKE_CONFIG
+from .const import FAKE_CONFIG, LEGACY_PLATFORM_CONFIG
 
 
 async def test_show_config_form(hass: HomeAssistant) -> None:
@@ -121,3 +126,31 @@ async def test_url(hass: HomeAssistant, camera: MagicMock, ssl: bool, url: str) 
     )
 
     camera.assert_called_with(url, 1234, "fake_user", "fake_password")
+
+
+async def test_yaml_import_with_delays(hass: HomeAssistant) -> None:
+    """Check an issue is created if YAML delay settings are present."""
+    yaml_config: dict = LEGACY_PLATFORM_CONFIG.copy()
+    yaml_config.update({CONF_CUSTOMIZE: {"Some Sensor": {CONF_DELAY: 12}}})
+
+    await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_IMPORT}, data=yaml_config
+    )
+
+    issue_registry = ir.async_get(hass)
+    issue = issue_registry.async_get_issue(DOMAIN, "customize_config_delay_present")
+    assert issue
+
+
+async def test_yaml_import_with_ignored(hass: HomeAssistant) -> None:
+    """Check an issue is created if YAML ignored settings are present."""
+    yaml_config: dict = LEGACY_PLATFORM_CONFIG.copy()
+    yaml_config.update({CONF_CUSTOMIZE: {"Some Sensor": {CONF_IGNORED: True}}})
+
+    await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_IMPORT}, data=yaml_config
+    )
+
+    issue_registry = ir.async_get(hass)
+    issue = issue_registry.async_get_issue(DOMAIN, "customize_config_ignored_present")
+    assert issue
