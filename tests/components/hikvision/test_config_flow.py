@@ -11,7 +11,7 @@ from homeassistant.components.hikvision.const import (
 )
 from homeassistant.config_entries import SOURCE_IMPORT, SOURCE_USER
 from homeassistant.const import CONF_DELAY, CONF_NAME, CONF_SSL
-from homeassistant.core import HomeAssistant
+from homeassistant.core import DOMAIN as HOMEASSISTANT_DOMAIN, HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 import homeassistant.helpers.issue_registry as ir
 
@@ -173,4 +173,25 @@ async def test_yaml_import_connection_error(
 
     issue_registry = ir.async_get(hass)
     issue = issue_registry.async_get_issue(DOMAIN, "deprecated_yaml_cannot_connect")
+    assert issue
+
+
+async def test_yaml_import_success(hass: HomeAssistant, camera: MagicMock) -> None:
+    """Check an import success."""
+    yaml_config: dict = LEGACY_PLATFORM_CONFIG.copy()
+
+    camera.return_value.get_id = "1234"
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_IMPORT}, data=yaml_config
+    )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"] == yaml_config
+    assert result["result"].unique_id == "1234"
+
+    issue_registry = ir.async_get(hass)
+    issue = issue_registry.async_get_issue(
+        HOMEASSISTANT_DOMAIN, "deprecated_yaml_hikvision"
+    )
     assert issue
