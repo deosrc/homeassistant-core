@@ -18,7 +18,7 @@ async def test_sensor_setup(
     camera.return_value.get_id = 1234
     camera.return_value.get_type = cam_type
     camera.return_value.current_event_states = {
-        "test sensor": [
+        "Line Crossing": [
             [
                 False,  # Sensor State
                 1,  # Channel Number (for NVRs)
@@ -33,17 +33,17 @@ async def test_sensor_setup(
     await hass.async_block_till_done()
 
     if cam_type == "NVR":
-        sensor_entity_id = "binary_sensor.fake_name_test_sensor_1"
-        sensor_name = "fake_name test sensor 1"
+        sensor_entity_id = "binary_sensor.fake_name_line_crossing_1"
+        sensor_name = "fake_name Line Crossing 1"
     else:
-        sensor_entity_id = "binary_sensor.fake_name_test_sensor"
-        sensor_name = "fake_name test sensor"
+        sensor_entity_id = "binary_sensor.fake_name_line_crossing"
+        sensor_name = "fake_name Line Crossing"
 
     entity_registry_entry = hass.data["entity_registry"].entities.data[sensor_entity_id]
 
     assert hass.states.get(sensor_entity_id) is not None
     assert entity_registry_entry.original_name == sensor_name
-    assert entity_registry_entry.unique_id == "1234.test sensor.1"
+    assert entity_registry_entry.unique_id == "1234.Line Crossing.1"
 
 
 async def test_callback_registered(
@@ -53,7 +53,7 @@ async def test_callback_registered(
     camera.return_value.get_id = 1234
     camera.return_value.get_type = "NVR"
     camera.return_value.current_event_states = {
-        "test sensor": [
+        "Line Crossing": [
             [
                 False,  # Sensor State
                 1,  # Channel Number (for NVRs)
@@ -67,7 +67,7 @@ async def test_callback_registered(
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    sensor_entity_id = "binary_sensor.fake_name_test_sensor_1"
+    sensor_entity_id = "binary_sensor.fake_name_line_crossing_1"
     entity_registry_entry = hass.data["entity_registry"].entities.data[sensor_entity_id]
 
     _, args, _ = camera.return_value.add_update_callback.mock_calls[0]
@@ -94,12 +94,12 @@ async def test_sensor_value(
         datetime(2024, 9, 15, 17, 28, 24, 938074),  # Last update time
     ]
     camera.return_value.current_event_states = {
-        "test sensor": [camera.return_value.fetch_attributes.return_value]
+        "Line Crossing": [camera.return_value.fetch_attributes.return_value]
     }
 
     config_entry.add_to_hass(hass)
     await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    state = hass.states.get("binary_sensor.fake_name_test_sensor_1").state
+    state = hass.states.get("binary_sensor.fake_name_line_crossing_1").state
     assert state == expected_state
