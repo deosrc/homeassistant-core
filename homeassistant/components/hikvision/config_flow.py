@@ -103,8 +103,9 @@ class HikvisionConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                     break
 
-        del legacy_config[CONF_CUSTOMIZE]
-        del legacy_config["platform"]
+        # Remove unnecessary keys
+        legacy_config.pop(CONF_CUSTOMIZE, None)
+        legacy_config.pop("platform", None)
 
         try:
             conn = await self.hass.async_add_executor_job(
