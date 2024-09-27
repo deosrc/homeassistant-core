@@ -103,3 +103,28 @@ async def test_sensor_value(
 
     state = hass.states.get("binary_sensor.fake_name_line_crossing_1").state
     assert state == expected_state
+
+
+async def test_sensor_delay(
+    hass: HomeAssistant, config_entry_with_options: MockConfigEntry, camera: MagicMock
+) -> None:
+    """Test a sensor configured with a delay."""
+    camera.return_value.get_id = 1234
+    camera.return_value.get_type = "NVR"
+    camera.return_value.fetch_attributes.return_value = [
+        False,  # Sensor State
+        1,  # Channel Number (for NVRs)
+        0,
+        datetime(2024, 9, 15, 17, 28, 24, 938074),  # Last update time
+    ]
+    camera.return_value.current_event_states = {
+        "Line Crossing": [camera.return_value.fetch_attributes.return_value]
+    }
+
+    config_entry_with_options.add_to_hass(hass)
+    await hass.config_entries.async_setup(config_entry_with_options.entry_id)
+    await hass.async_block_till_done()
+
+    # Check delay attribute
+    sensor_state = hass.states.get("binary_sensor.fake_name_line_crossing_1")
+    assert sensor_state.attributes.get("delay") == 12

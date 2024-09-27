@@ -107,7 +107,7 @@ async def async_setup_entry(
 
     for sensor, channel_list in data.sensors.items():
         # Determine delay
-        sensor_type = PYHIKVISION_HA_SENSOR_TYPE_MAP[sensor]
+        sensor_type = PYHIKVISION_HA_SENSOR_TYPE_MAP.get(sensor, sensor)
         delay_options_key = f"delay.{sensor_type}"
         delay = config_entry.options.get(delay_options_key, 0)
 

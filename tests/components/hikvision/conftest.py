@@ -26,3 +26,11 @@ def camera():
 def config_entry():
     """Create a mock config entry."""
     return MockConfigEntry(domain=DOMAIN, data=FAKE_CONFIG.copy())
+
+
+@pytest.fixture(autouse=True)
+def config_entry_with_options():
+    """Create a mock config entry."""
+    return MockConfigEntry(
+        domain=DOMAIN, data=FAKE_CONFIG.copy(), options={"delay.line_crossing": 12}
+    )
